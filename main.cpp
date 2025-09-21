@@ -2,6 +2,10 @@
 
 
 int main() {
-    std::cout << "Ğ”Ğ°Ğ°Ğ°Ğ°Ğ°Ğ°Ğ°Ğ°";
+    std::cout << "„€€€€€€€€€€€€€€€€€€€€€";
+
+    int a;
+    std::cin >> a;
+
     return 0;
 }
