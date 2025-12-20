@@ -2,7 +2,7 @@
 
 
 int main() {
-    std::cout << "„€€€€€€€€€€€€€€€€€€€€€";
+    std::cout << "Ğ”ĞĞĞĞĞĞĞĞĞĞ";
 
     int a;
     std::cin >> a;
