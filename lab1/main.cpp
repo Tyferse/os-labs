@@ -2,7 +2,7 @@
 
 
 int main() {
-    std::cout << "ДАААААААААА";
+    std::cout << "Hello Ми ни ми из оси";
 
     int a;
     std::cin >> a;
