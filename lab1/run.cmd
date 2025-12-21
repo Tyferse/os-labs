@@ -1,7 +1,7 @@
 @echo off
 echo === Запуск процесса обновления и сборки ===
 
-@REM git pull
+git pull
 
 REM Переход в директорию проекта
 set PROJ_DIR=%~dp0
