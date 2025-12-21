@@ -9,9 +9,11 @@ git pull
 PROJ_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$PROJ_DIR"
 
-if [ ! -d "build" ]; then
-    mkdir build
+
+if [ -e "build" ]; then
+    rm -rf build
 fi
+mkdir build
 cd build
 
 cmake ..
