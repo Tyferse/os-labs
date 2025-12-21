@@ -2,30 +2,16 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build debug",
+            "label": "lab1 build with CMake",
             "type": "shell",
-            "command": "g++",
+            "command": "cmake",
             "args": [
-                "-g",
-                "-O0",
-                "-Wall",
-                "-Wextra",
-                // "-std=c++17",
-                "${file}",
-                "-o",
-                "${fileDirname}/build/${fileBasenameNoExtension}.exe"
+                "--build",
+                "${workspaceFolder}/lab1/build",
+                "--config",
+                "Debug"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "problemMatcher": "$gcc"
-        }
+            "group": "build"
+        },
     ]
 }

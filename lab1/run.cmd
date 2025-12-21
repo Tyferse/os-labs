@@ -1,15 +1,18 @@
 @echo off
 echo === Запуск процесса обновления и сборки ===
 
-git pull
+@REM git pull
 
 REM Переход в директорию проекта
 set PROJ_DIR=%~dp0
 cd /d "%PROJ_DIR%"
 
-if not exist "build" mkdir build
+if exist "build" (
+    rmdir /s /q build
+)
+
+mkdir build
 cd build
 
-cmake ..
+cmake -G "MinGW Makefiles" ..
 mingw32-make
-pause
