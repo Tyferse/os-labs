@@ -2,13 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "lab1 gdb launch",
+      "name": "linux gdb launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/lab1/build/Lab1",
+      "program": "build/main",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "${relativeFileDirname}/../",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
@@ -24,7 +24,28 @@
               "ignoreFailures": true
           }
       ],
-      "preLaunchTask": "lab1 build with CMake"
+      "preLaunchTask": "CMake build"
+    },
+    {
+      "name": "windows gdb launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/${relativeFileDirname}/../build/lab.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/${relativeFileDirname}/../build",
+      "environment": [],
+      // "externalConsole": true,
+      "MIMode": "gdb",
+      // "miDebuggerPath": "C:/mingw64/bin/gdb.exe",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake build"
     }
   ]
 }

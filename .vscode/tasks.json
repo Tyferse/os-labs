@@ -2,14 +2,20 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "lab1 build with CMake",
+            "label": "CMake build",
             "type": "shell",
             "command": "cmake",
             "args": [
-                "--build",
-                "${workspaceFolder}/lab1/build",
-                "--config",
-                "Debug"
+                "-G",
+                "MinGW Makefiles",
+                "-B",
+                "${workspaceFolder}/${relativeFileDirname}/../build",
+                "-S",
+                "${workspaceFolder}/${relativeFileDirname}/..",
+                ";",
+                "mingw32-make",
+                "-C",
+                "${workspaceFolder}/${relativeFileDirname}/../build"
             ],
             "group": "build"
         },
