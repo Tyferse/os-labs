@@ -6,16 +6,10 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-G",
-                "MinGW Makefiles",
-                "-B",
+                "--build",
                 "${workspaceFolder}/${relativeFileDirname}/../build",
-                "-S",
-                "${workspaceFolder}/${relativeFileDirname}/..",
-                ";",
-                "mingw32-make",
-                "-C",
-                "${workspaceFolder}/${relativeFileDirname}/../build"
+                "--config",
+                "Debug"
             ],
             "group": "build"
         },
