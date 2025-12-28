@@ -34,6 +34,16 @@ int run_bg_program(const char* command, ProcessHandle* handle) {
     handle->finished = false;
     return 0;
 #else
+    handle->pid = fork();
+    if (handle->pid == 0) {
+        execl("/bin/sh", "/bin/sh", "-c", command, (char *)NULL);
+        exit(127);
+    } else if (handle->pid > 0) {
+        handle->finished = false;
+        return 0;
+    } else {
+        return -1;
+    }
 #endif
 }
 
@@ -49,5 +59,17 @@ int wait_for_process(ProcessHandle* handle) {
     }
     return -1;
 #else
+    int status;
+    pid_t result = waitpid(handle->pid, &status, 0);
+    if (result == handle->pid) {
+        if (WIFEXITED(status)) {
+            handle->exit_code = WEXITSTATUS(status);
+        } else {
+            handle->exit_code = -1;
+        }
+        handle->finished = true;
+        return handle->exit_code;
+    }
+    return -1;
 #endif
 }
