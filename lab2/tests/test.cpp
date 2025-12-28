@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
     ProcessHandle handle;
     const char* cmd;
     
-    if (argc == 0) {
+    if (argc == 1) {
         cmd = "sleep 2";
 
 #ifdef _WIN32
@@ -14,8 +14,8 @@ int main(int argc, char* argv[]) {
 #endif
     }
     else {
-        std::string buf = argv[0];
-        for (int i = 1; i < argc; i++) {
+        std::string buf = argv[1];
+        for (int i = 2; i < argc; i++) {
             buf += " ";
             buf += argv[i];
         }

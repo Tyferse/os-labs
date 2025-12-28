@@ -16,4 +16,4 @@ cd build
 
 cmake ..
 make
-./test
+./test sleep 4

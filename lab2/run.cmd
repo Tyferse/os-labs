@@ -14,4 +14,4 @@ cd build
 
 cmake -G "MinGW Makefiles" ..
 mingw32-make
-test.exe
+test.exe timeout 5
