@@ -2,13 +2,26 @@
 #include <iostream>
 
 
-int main() {
+int main(int argc, char* argv[]) {
     ProcessHandle handle;
-    const char* cmd = "sleep 2";
+    const char* cmd;
+    
+    if (argc == 0) {
+        cmd = "sleep 2";
 
 #ifdef _WIN32
-    cmd = "timeout 2";
+        cmd = "timeout 2";
 #endif
+    }
+    else {
+        std::string buf = argv[0];
+        for (int i = 1; i < argc; i++) {
+            buf += " ";
+            buf += argv[i];
+        }
+
+        cmd = buf.c_str();
+    }
 
     std::cout << "Start programm: " << cmd << std::endl;
 
