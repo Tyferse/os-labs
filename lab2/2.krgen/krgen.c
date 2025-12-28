@@ -3,11 +3,13 @@
 // утилиту convert() из состава пакета imagemagick 
 // для преобразования картинки в желаемый пользователем формат
 
+
 #include <stdio.h>      // fputs(), fprintf(), remove()
 #include <string.h>     // strcpy(), strcat()
 #include <stdlib.h>     // malloc()
 #include <unistd.h>     // fork(), exec()
 #include <sys/wait.h>   // wait()
+
 
 // Описание цвета: символ, которым цвет описывается
 // и сам цвет в формате строке "RRGGBB"
