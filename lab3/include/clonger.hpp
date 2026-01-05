@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <fstream>
 #include <iostream>
 
 #ifndef CLONGER_H
@@ -51,6 +52,7 @@ class CloneLogger {
         bool is_process_running(int pid);
         
         std::string log_file_;
+        std::ofstream log_stream_;
         cplib::SharedMem<CounterData> shared_mem_;
         std::atomic<bool> running_;
         std::thread timer_thread_;
@@ -58,7 +60,7 @@ class CloneLogger {
         std::thread cloning_thread_;
         std::thread input_thread_;
         std::vector<int> spawned_pids_;
-        std::atomic<int> current_pid_;
+        const int current_pid_;
 };
 
 #endif

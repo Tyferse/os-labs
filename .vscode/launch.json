@@ -5,7 +5,7 @@
       "name": "gdb launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/${relativeFileDirname}/../build/lab",
+      "program": "${workspaceFolder}/${relativeFileDirname}/../build/clonger",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/${relativeFileDirname}/../build",

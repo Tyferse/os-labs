@@ -1,6 +1,0 @@
-PROJECT(shmem)
-ADD_EXECUTABLE(my_shmem my_shmem.hpp test.cpp)
-IF (NOT WIN32)
-    # В POSIX нужно линковаться к rt для shm_open() и к pthread для sem_open()
-    TARGET_LINK_LIBRARIES(my_shmem rt pthread)
-ENDIF (NOT WIN32)

@@ -43,14 +43,18 @@ std::string get_curr_time_ms() {
 
 
 CloneLogger::CloneLogger(const std::string& log_file)
-    : log_file_(log_file), shared_mem_(SHARED_MEM_NAME), running_(true) 
+    : log_file_(log_file), log_stream_(log_file, std::ios::app), 
+      shared_mem_(SHARED_MEM_NAME), current_pid_(get_pid()), running_(true)
 {
     if (!shared_mem_.IsValid()) {
         std::cout << "Failed to create shared memory block!" << std::endl;
         exit(1);
     }
-
-    current_pid_ = get_pid();
+    else {
+        shared_mem_.Data()->master_exists = false;
+        shared_mem_.Data()->master_pid = 0;
+        shared_mem_.Data()->counter = 0;
+    }
 
     write_log("Process started with PID: " + std::to_string(current_pid_) 
               + " at " + get_curr_time());
@@ -70,6 +74,10 @@ CloneLogger::~CloneLogger() {
     
     write_log("Process with PID: " + std::to_string(current_pid_) 
               + " finished at " + get_curr_time());
+
+    if (log_stream_.is_open()) {
+        log_stream_.close();
+    }
 }
 
 void CloneLogger::run() {
@@ -85,11 +93,9 @@ void CloneLogger::run() {
 }
 
 void CloneLogger::write_log(const std::string& message) {
-    std::ofstream log(log_file_, std::ios::app);
-    if (log.is_open()) {
-        log << get_curr_time_ms() << " | PID: " << current_pid_ 
+    if (log_stream_.is_open()) {
+        log_stream_ << get_curr_time_ms() << " | PID: " << current_pid_ 
             << " | " << message << std::endl;
-        log.close();
     }
 }
 
@@ -179,7 +185,7 @@ void CloneLogger::spawn_clone(int clone_num) {
     pid_t pid = fork();
     if (pid == 0) {
         // Дочерний процесс
-        execl("./build/clonger", "./build/clonger", clone_arg.c_str(), (char*)NULL);
+        execlp("./build/clonger", "./build/cloneger", "--clone", std::to_string(clone_num).c_str(), (char*)NULL);
         _exit(127);
     }
 #endif
@@ -275,11 +281,13 @@ void run_clone(int clone_num) {
 
 
 int main(int argc, char* argv[]) {
-    if (argc > 1 && strcmp(argv[1], "--clone") == 0) {
-        std::cout << argv[1] << std::endl;
-        int clone_num = std::stoi(argv[2]);
-        run_clone(clone_num);
-        return 0;
+    if (argc > 1) {
+        std::string arg = argv[1];
+        if (arg.substr(0, 7) == "--clone") {
+            int clone_num = std::stoi(argv[2]);
+            run_clone(clone_num);
+            return 0;
+        }
     }
     
     // Основной процесс
