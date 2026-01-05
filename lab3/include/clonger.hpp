@@ -29,6 +29,9 @@ struct CounterData {
     CounterData() : counter(0), master_exists(false), master_pid(0) {}
 };
 
+std::string get_curr_time();
+std::string get_curr_time_ms();
+
 class CloneLogger {
     public:
         CloneLogger(const std::string& log_file);
@@ -38,8 +41,6 @@ class CloneLogger {
 
     private:
         void write_log(const std::string& message);
-        std::string get_curr_time();
-        std::string get_curr_time_ms();
         int get_pid();
         void timerThread();
         void loggingThread();

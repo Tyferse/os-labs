@@ -8,7 +8,7 @@
 #include <atomic>
 
 #define SHARED_MEM_NAME "counter_mem"
-#define LOG_FILE "logs.txt"
+#define LOG_FILE "log.log"
 
 #ifdef _WIN32
 #   include <windows.h>
@@ -16,6 +16,30 @@
 #else
 #   include <unistd.h>
 #endif
+
+
+std::string get_curr_time() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream strstr;
+    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    return strstr.str();
+}
+
+std::string get_curr_time_ms() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream strstr;
+    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    strstr << "." << std::setfill('0') << std::setw(3) << ms.count();
+    return strstr.str();
+}
 
 
 CloneLogger::CloneLogger(const std::string& log_file)
@@ -67,29 +91,6 @@ void CloneLogger::write_log(const std::string& message) {
             << " | " << message << std::endl;
         log.close();
     }
-}
-
-std::string CloneLogger::get_curr_time() {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
-    
-    std::stringstream strstr;
-    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    return strstr.str();
-}
-
-std::string CloneLogger::get_curr_time_ms() {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
-    
-    std::stringstream strstr;
-    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    strstr << "." << std::setfill('0') << std::setw(3) << ms.count();
-    return strstr.str();
 }
 
 int CloneLogger::get_pid() {
@@ -205,6 +206,7 @@ void CloneLogger::processUserInput() {
         else if (input == "quit") {
             running_ = false;
             break;
+
         }
     }
 }
@@ -232,12 +234,10 @@ void run_clone(int clone_num) {
     pid = static_cast<int>(getpid());
 #endif
 
-    std::string log_file = LOG_FILE;
-    std::ofstream log(log_file, std::ios::app);
+    std::ofstream log(LOG_FILE, std::ios::app);
     if (log.is_open()) {
-        log << std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count() 
-            << " | PID: " << pid << " | Clone " << clone_num << " started" << std::endl;
+        log << get_curr_time_ms() << " | PID: " << pid 
+            << " | Clone " << clone_num << " started" << std::endl;
         log.close();
     }
 
@@ -265,24 +265,20 @@ void run_clone(int clone_num) {
         shared_mem.Unlock();
     }
 
-    log.open(log_file, std::ios::app);
+    log.open(LOG_FILE, std::ios::app);
     if (log.is_open()) {
-        log << std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count() 
-            << " | PID: " << pid << " | Clone " << clone_num << " finished" << std::endl;
+        log << get_curr_time_ms() << " | PID: " << pid 
+            << " | Clone " << clone_num << " finished" << std::endl;
         log.close();
     }
 }
 
 
 int main(int argc, char* argv[]) {
-    if (argc > 1) {
-        // Это копия процесса
-        if (argv[1] == "--copy") {
-            int clone_num = std::stoi(argv[2]);
-            run_clone(clone_num);
-            return 0;
-        }
+    if (argc > 1 && strcmp(argv[1], "--clone") == 0) {
+        int clone_num = std::stoi(argv[2]);
+        run_clone(clone_num);
+        return 0;
     }
     
     // Основной процесс
