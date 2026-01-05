@@ -276,6 +276,7 @@ void run_clone(int clone_num) {
 
 int main(int argc, char* argv[]) {
     if (argc > 1 && strcmp(argv[1], "--clone") == 0) {
+        std::cout << argv[1] << std::endl;
         int clone_num = std::stoi(argv[2]);
         run_clone(clone_num);
         return 0;
