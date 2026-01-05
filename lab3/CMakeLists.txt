@@ -12,12 +12,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-add_library(bg_runner src/bg_runner.cpp)
-target_include_directories(bg_runner PUBLIC include)
+add_executable(clonger src/clonger.cpp)
+target_include_directories(clonger PUBLIC include)
 
 if(WIN32)
-    target_compile_definitions(bg_runner PRIVATE _WIN32)
+    target_compile_definitions(clonger PRIVATE _WIN32)
+else()
+    target_link_libraries(clonger rt pthread)
 endif()
 
-add_executable(test tests/test.cpp)
-target_link_libraries(test bg_runner)
+# add_executable(test tests/test.cpp)
+# target_link_libraries(test clonger)

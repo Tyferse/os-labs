@@ -37,7 +37,7 @@ int run_bg_program(const char* command, ProcessHandle* handle) {
     handle->pid = fork();
     if (handle->pid == 0) {
         execl("/bin/sh", "/bin/sh", "-c", command, (char *)NULL);
-        exit(127);
+        _exit(127);
     } else if (handle->pid > 0) {
         handle->finished = false;
         return 0;

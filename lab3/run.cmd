@@ -14,4 +14,5 @@ cd build
 
 cmake -G "MinGW Makefiles" ..
 mingw32-make
-test.exe timeout 5
+cd ..
+build\clonger.exe

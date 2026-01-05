@@ -16,4 +16,5 @@ cd build
 
 cmake ..
 make
-./test sleep 4
+cd ..
+./build/clonger
