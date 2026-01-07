@@ -5,6 +5,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <sstream>
 #include <fstream>
 #include <iostream>
 
@@ -29,8 +30,27 @@ struct CounterData {
     CounterData() : counter(0), master_exists(false), master_pid(0) {}
 };
 
-std::string get_curr_time();
-std::string get_curr_time_ms();
+
+std::string get_curr_time() {
+    auto time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    
+    std::stringstream strstr;
+    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    return strstr.str();
+}
+
+std::string get_curr_time_ms() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream strstr;
+    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    strstr << "." << std::setfill('0') << std::setw(3) << ms.count();
+    return strstr.str();
+}
+
 
 class CloneLogger {
     public:

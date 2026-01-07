@@ -16,5 +16,5 @@ cd build
 
 cmake ..
 make
-cd ..
-./build/temper_logger
+# cd ..
+# ./build/temper_logger

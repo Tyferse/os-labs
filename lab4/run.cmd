@@ -14,5 +14,5 @@ cd build
 
 cmake -G "MinGW Makefiles" ..
 mingw32-make
-cd ..
-build\temper_logger.exe
+@REM cd ..
+@REM build\temper_logger.exe
