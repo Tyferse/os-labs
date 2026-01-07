@@ -20,6 +20,39 @@ std::string get_curr_time() {
     return strstr.str();
 }
 
+// Возвращает дату и время из строки логов
+std::time_t parse_time(const std::string& time_str) {
+    struct std::tm tm_time = {};
+    std::istringstream ss(time_str);
+    ss >> std::get_time(&tm_time, "%Y-%m-%d %H:%M:%S");
+    // if (ss.fail()) {
+    //     // Пробуем формат без времени (для daily.log)
+    //     ss.clear();
+    //     ss.str(time_str);
+    //     ss >> std::get_time(&tm_time, "%Y-%m-%d");
+    // }
+    return std::mktime(&tm_time);
+}
+
+// Возвращает время, отстоящее на заданное количество секунд назад
+std::time_t subtract_seconds(std::time_t base_time, long seconds) {
+    return base_time - seconds;
+}
+
+// Возвращает время, отстоящее на заданный месяц назад (приблизительно)
+std::time_t subtract_months(std::time_t base_time, int months) {
+    struct std::tm tm_time = *std::localtime(&base_time);
+    tm_time.tm_mon -= months;
+    return std::mktime(&tm_time);
+}
+
+// Возвращает время, отстоящее на заданный год назад (приблизительно)
+std::time_t subtract_years(std::time_t base_time, int years) {
+    struct std::tm tm_time = *std::localtime(&base_time);
+    tm_time.tm_year -= years;
+    return std::mktime(&tm_time);
+}
+
 
 class TemperLogger
 {
@@ -33,6 +66,7 @@ public:
 private:
     void read_loop();
     void process_temper(double temp);
+    void clear_logs(const std::string& filename, std::time_t threshold_time);
     void avg_per_hour();
     void avg_per_day();
 

@@ -8,22 +8,23 @@
 #include <thread>
 
 #define LOG_DIR std::string("logs/")
+#define FULL_LOG std::string("full_temperature.log")
+#define HOUR_LOG std::string("hour_temperature.log")
+#define DAY_LOG std::string("day_temperature.log")
 
 
 TemperLogger::TemperLogger(const std::string& port_name)
-    : port_name_(port_name)
-{
+    : port_name_(port_name) {
     cplib::SerialPort::Parameters params(cplib::SerialPort::BAUDRATE_115200);
     port_.Open(port_name_, params);
     port_.SetTimeout(1.0);
 
-    full_log_.open(LOG_DIR + "full_temperature.log", std::ios::app);
-    hour_log_.open(LOG_DIR + "hour_temperature.log", std::ios::app);
-    day_log_.open(LOG_DIR + "day_temperature.log", std::ios::app);
+    full_log_.open(LOG_DIR + FULL_LOG, std::ios::app);
+    hour_log_.open(LOG_DIR + HOUR_LOG, std::ios::app);
+    day_log_.open(LOG_DIR + DAY_LOG, std::ios::app);
 }
 
-TemperLogger::~TemperLogger()
-{
+TemperLogger::~TemperLogger() {
     stop();
 
     if (full_log_.is_open())
@@ -34,8 +35,7 @@ TemperLogger::~TemperLogger()
         day_log_.close();
 }
 
-bool TemperLogger::start()
-{
+bool TemperLogger::start() {
     if (!port_.IsOpen()) {
         std::cerr << "Failed to open port: " << port_name_ << "\n";
         return false;
@@ -48,8 +48,7 @@ bool TemperLogger::start()
     return true;
 }
 
-void TemperLogger::stop()
-{
+void TemperLogger::stop() {
     running_ = false;
     if (read_thread_.joinable()) 
         read_thread_.join();
@@ -59,8 +58,7 @@ void TemperLogger::stop()
         day_thread_.join();
 }
 
-void TemperLogger::read_loop()
-{
+void TemperLogger::read_loop() {
     std::string line;
     while (running_) {
         port_>> line;
@@ -74,9 +72,11 @@ void TemperLogger::read_loop()
     }
 }
 
-void TemperLogger::process_temper(double temper)
-{
+void TemperLogger::process_temper(double temper) {
     std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!full_log_.is_open()) 
+        return;
 
     full_log_ << get_curr_time() << " | " << temper << std::endl;
     full_log_.flush();
@@ -84,8 +84,29 @@ void TemperLogger::process_temper(double temper)
     hour_temps_.push_back(temper);
 }
 
-void TemperLogger::avg_per_hour()
-{
+void TemperLogger::clear_logs(const std::string& filename, std::time_t threshold_time) {
+    std::ifstream in(filename);
+    if (!in.is_open()) 
+        return;
+
+    std::string temp_filename = filename + ".tmp";
+    std::ofstream out(temp_filename);
+
+    std::string line;
+    while (std::getline(in, line)) {
+        auto timestamp = parse_time(line);
+        if (timestamp >= threshold_time) 
+            out << line << std::endl;
+    }
+
+    in.close();
+    out.close();
+
+    // Заменяем оригинальный файл
+    std::rename(temp_filename.c_str(), filename.c_str());
+}
+
+void TemperLogger::avg_per_hour() {
     while (running_) {
         std::this_thread::sleep_for(std::chrono::minutes(60));
 
@@ -98,7 +119,8 @@ void TemperLogger::avg_per_hour()
             sum += t;
 
         double avg = sum / hour_temps_.size();
-
+        
+        if (hour_log_.is_open())
         hour_log_ << get_curr_time() << " | " << avg << std::endl;
         hour_log_.flush();
 
@@ -106,8 +128,7 @@ void TemperLogger::avg_per_hour()
     }
 }
 
-void TemperLogger::avg_per_day()
-{
+void TemperLogger::avg_per_day() {
     while (running_) {
         std::this_thread::sleep_for(std::chrono::hours(24));
 
@@ -129,8 +150,7 @@ void TemperLogger::avg_per_day()
 }
 
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: temper_logger [port]\n";
         return 1;
