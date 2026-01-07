@@ -5,7 +5,6 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
-#include <vector>
 #include <fstream>
 #include <iostream>
 
@@ -59,7 +58,6 @@ class CloneLogger {
         std::thread logging_thread_;
         std::thread cloning_thread_;
         std::thread input_thread_;
-        std::vector<int> spawned_pids_;
         const int current_pid_;
 };
 

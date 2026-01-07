@@ -50,11 +50,11 @@ CloneLogger::CloneLogger(const std::string& log_file)
         std::cout << "Failed to create shared memory block!" << std::endl;
         exit(1);
     }
-    else {
-        shared_mem_.Data()->master_exists = false;
-        shared_mem_.Data()->master_pid = 0;
-        shared_mem_.Data()->counter = 0;
-    }
+    // else {
+    //     shared_mem_.Data()->master_exists = false;
+    //     shared_mem_.Data()->master_pid = 0;
+    //     shared_mem_.Data()->counter = 0;
+    // }
 
     write_log("Process started with PID: " + std::to_string(current_pid_) 
               + " at " + get_curr_time());
@@ -86,10 +86,14 @@ void CloneLogger::run() {
     cloning_thread_ = std::thread(&CloneLogger::cloningThread, this);
     input_thread_ = std::thread(&CloneLogger::processUserInput, this);
     
-    timer_thread_.join();
-    logging_thread_.join();
-    cloning_thread_.join();
-    input_thread_.join();
+    if (timer_thread_.joinable()) 
+        timer_thread_.join();
+    if (logging_thread_.joinable()) 
+        logging_thread_.join();
+    if (cloning_thread_.joinable()) 
+        cloning_thread_.join();
+    if (input_thread_.joinable()) 
+        input_thread_.join();
 }
 
 void CloneLogger::write_log(const std::string& message) {
@@ -113,9 +117,9 @@ void CloneLogger::timerThread() {
         
         shared_mem_.Lock();
         CounterData* data = shared_mem_.Data();
-        if (data) {
+        if (data)
             data->counter++;
-        }
+        
         shared_mem_.Unlock();
     }
 }
@@ -141,7 +145,6 @@ void CloneLogger::cloningThread() {
         shared_mem_.Lock();
         CounterData* data = shared_mem_.Data();
         if (data) {
-            // Проверяем, есть ли уже запущенные копии
             bool spawn_allowed = false;
             
             // Проверяем, является ли этот процесс основным
@@ -149,14 +152,16 @@ void CloneLogger::cloningThread() {
                 data->master_exists = true;
                 data->master_pid = current_pid_;
                 spawn_allowed = true;
-            } else if (data->master_pid == current_pid_) {
+            } 
+            else if (data->master_pid == current_pid_) {
                 spawn_allowed = true;
             }
             
             if (spawn_allowed) {
                 spawn_clone(1);
                 spawn_clone(2);
-            } else {
+            } 
+            else {
                 write_log("Another master process is running, skipping spawn");
             }
         }
@@ -253,7 +258,8 @@ void run_clone(int clone_num) {
         if (clone_num == 1) {
             // Copy 1: увеличивает счетчик на 10
             data->counter += 10;
-        } else if (clone_num == 2) {
+        } 
+        else if (clone_num == 2) {
             // Copy 2: увеличивает в 2 раза, через 2 секунды уменьшает в 2 раза
             int old_val = data->counter;
             data->counter *= 2;
@@ -283,7 +289,7 @@ void run_clone(int clone_num) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         std::string arg = argv[1];
-        if (arg.substr(0, 7) == "--clone") {
+        if (arg == "--clone") {
             int clone_num = std::stoi(argv[2]);
             run_clone(clone_num);
             return 0;
