@@ -65,8 +65,8 @@ public:
 
 private:
     void read_loop();
+    void clear_logs(unsigned int file_, std::time_t threshold_time);
     void process_temper(double temp);
-    void clear_logs(const std::string& filename, std::time_t threshold_time);
     void avg_per_hour();
     void avg_per_day();
 

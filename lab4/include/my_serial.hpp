@@ -85,7 +85,7 @@ namespace cplib
 		enum FlowControl
 		{
 			CONTROL_NONE = 0,
-#ifdef _WIN32 || defined (_BSD_SOURCE) || defined (_SVID_SOURCE) || defined (__QNXNTO__)
+#if defined (_WIN32) || defined (_BSD_SOURCE) || defined (_SVID_SOURCE) || defined (__QNXNTO__)
 			CONTROL_HARDWARE_RTS_CTS = 0x01,
 #endif
 			// Контроль DSR/DTR не поддерживается в POSIX
