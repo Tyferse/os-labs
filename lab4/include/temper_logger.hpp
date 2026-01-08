@@ -11,6 +11,31 @@
 #include <thread>
 #include <memory>
 
+#ifdef _WIN32
+    #include <windows.h>
+    #include <direct.h>
+    #include <io.h>
+#else
+    #include <sys/stat.h>
+    #include <unistd.h>
+#endif
+
+
+bool directory_exists(const std::string& path) {
+#ifdef _WIN32
+    return _access(path.c_str(), 0) == 0;
+#else
+    return access(path.c_str(), F_OK) == 0;
+#endif
+}
+
+bool create_single_directory(const std::string& path) {
+#ifdef _WIN32
+    return _mkdir(path.c_str()) == 0;
+#else
+    return mkdir(path.c_str(), 0777) == 0; 
+#endif
+}
 
 std::string get_curr_time() {
     auto time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());

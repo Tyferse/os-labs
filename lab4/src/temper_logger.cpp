@@ -28,6 +28,9 @@ TemperLogger::TemperLogger(const std::string& port_name)
     port_.Open(port_name_, params);
     port_.SetTimeout(1.0);
 
+    if (!directory_exists(LOG_DIR))
+        create_single_directory(LOG_DIR);
+    
     full_log_.open(LOG_FILES[FULL_F], std::ios::app);
     hour_log_.open(LOG_FILES[HOUR_F], std::ios::app);
     day_log_.open(LOG_FILES[DAY_F], std::ios::app);
