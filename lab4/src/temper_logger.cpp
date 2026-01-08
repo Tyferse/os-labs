@@ -108,10 +108,10 @@ void TemperLogger::read_loop() {
         port_>> line;
         if (!line.empty()) {
             std::istringstream iss(line);
-            double temper;
-            if (iss >> temper) {
-                process_temper(temper);
-            }
+            double temper1, temper2;
+            if (iss >> temper1 >> temper2) 
+                if (temper1 == temper2)
+                    process_temper(temper1);
         }
     }
 }

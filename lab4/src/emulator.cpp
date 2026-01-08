@@ -71,10 +71,10 @@ int main(int argc, char** argv)
 
     while (true) {
         double temp = gen_temper(gen); // dist(gen);
-        std::string data = to_string(temp);
+        std::string data = to_string(temp) + " " + to_string(temp);
         
         port << data;
-        std::cout << "Sent: " << data << std::endl;
+        std::cout << "Sent: " << temp << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         std::cout.flush();

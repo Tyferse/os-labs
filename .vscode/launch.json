@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/${relativeFileDirname}/../build/temper_logger",
-      "args": ["CNCB0"],
+      "args": ["COM5"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/${relativeFileDirname}/../build",
       "environment": [],
