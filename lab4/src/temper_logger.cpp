@@ -127,7 +127,7 @@ void TemperLogger::process_temper(double temper) {
         if (full_log_.is_open())
             full_log_.close();
         
-        clear_logs(FULL_F, subtract_seconds(std::time(nullptr), 60));
+        clear_logs(FULL_F, subtract_seconds(std::time(nullptr), 24 * 3600));
         full_log_.open(LOG_FILES[FULL_F], std::ios::app);
     }
 
@@ -140,7 +140,7 @@ void TemperLogger::process_temper(double temper) {
 
 void TemperLogger::avg_per_hour() {
     while (running_) {
-        std::this_thread::sleep_for(std::chrono::minutes(1));
+        std::this_thread::sleep_for(std::chrono::hours(1));
 
         mutex_.lock();
         if (hour_temps_.empty() || !hour_log_.is_open()) 
@@ -160,7 +160,7 @@ void TemperLogger::avg_per_hour() {
 
 void TemperLogger::avg_per_day() {
     while (running_) {
-        std::this_thread::sleep_for(std::chrono::minutes(3)); //hours(24));
+        std::this_thread::sleep_for(std::chrono::hours(24));
 
         mutex_.lock();
         if (day_temps_.empty() || !day_log_.is_open()) 
@@ -170,13 +170,13 @@ void TemperLogger::avg_per_day() {
         if (hour_log_.is_open())
             hour_log_.close();
         
-        clear_logs(HOUR_F, subtract_seconds(std::time(nullptr), 3*60));
+        clear_logs(HOUR_F, subtract_months(std::time(nullptr), 1));
         hour_log_.open(LOG_FILES[HOUR_F], std::ios::app);
 
         if (day_log_.is_open())
             day_log_.close();
         
-        clear_logs(DAY_F, subtract_seconds(std::time(nullptr), 6*60));
+        clear_logs(DAY_F, subtract_years(std::time(nullptr), 1));
         day_log_.open(LOG_FILES[DAY_F], std::ios::app);
         
 
