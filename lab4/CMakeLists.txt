@@ -12,14 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-add_executable(clonger src/clonger.cpp)
-target_include_directories(clonger PUBLIC include)
+add_executable(temper_logger src/temper_logger.cpp)
+add_executable(temper_emulator src/emulator.cpp)
 
-if(WIN32)
-    target_compile_definitions(clonger PRIVATE _WIN32)
-else()
-    target_link_libraries(clonger rt pthread)
-endif()
-
-# add_executable(test tests/test.cpp)
-# target_link_libraries(test clonger)
+target_include_directories(temper_logger PUBLIC include)
+target_include_directories(temper_emulator PUBLIC include)

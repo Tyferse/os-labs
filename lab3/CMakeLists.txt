@@ -20,6 +20,3 @@ if(WIN32)
 else()
     target_link_libraries(clonger rt pthread)
 endif()
-
-# add_executable(test tests/test.cpp)
-# target_link_libraries(test clonger)

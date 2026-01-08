@@ -1,11 +1,8 @@
 #include "clonger.hpp"
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <iostream>
-#include <chrono>
 #include <thread>
-#include <atomic>
 
 #define SHARED_MEM_NAME "counter_mem"
 #define LOG_FILE "log.log"
@@ -16,30 +13,6 @@
 #else
 #   include <unistd.h>
 #endif
-
-
-std::string get_curr_time() {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
-    
-    std::stringstream strstr;
-    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    return strstr.str();
-}
-
-std::string get_curr_time_ms() {
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
-    
-    std::stringstream strstr;
-    strstr << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    strstr << "." << std::setfill('0') << std::setw(3) << ms.count();
-    return strstr.str();
-}
 
 
 CloneLogger::CloneLogger(const std::string& log_file)

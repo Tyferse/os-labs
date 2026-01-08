@@ -16,6 +16,7 @@
 
 #include <string>    // std::string
 #include <cstring>   // strcmp()
+#include <cstdint>
 
 #define MY_PORT_READ_BUF	1500
 #define MY_PORT_WRITE_BUF   1500
@@ -84,7 +85,7 @@ namespace cplib
 		enum FlowControl
 		{
 			CONTROL_NONE = 0,
-#ifdef _WIN32 || defined (_BSD_SOURCE) || defined (_SVID_SOURCE) || defined (__QNXNTO__)
+#if defined (_WIN32) || defined (_BSD_SOURCE) || defined (_SVID_SOURCE) || defined (__QNXNTO__)
 			CONTROL_HARDWARE_RTS_CTS = 0x01,
 #endif
 			// Контроль DSR/DTR не поддерживается в POSIX
