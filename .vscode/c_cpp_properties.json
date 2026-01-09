@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "C:/mingw64/include/**",
                 "C:/mingw64/x86_64-w64-mingw32/include/**",
-                ""
+                "C:/mingw64/opt/include/**"
             ],
             "defines": [],
             "cStandard": "c23",
