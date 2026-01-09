@@ -2,6 +2,7 @@
 
 #include "my_serial.hpp"
 #include "db.hpp"
+#include "server.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -70,14 +71,13 @@ private:
     void process_temper(double temp);
     void avg_per_hour();
     void avg_per_day();
+    std::string handle_tcp_request(const std::string& request);
 
     cplib::SerialPort port_;
     std::string port_name_;
     
     std::unique_ptr<DBManager> dbm_;
-
-    // std::vector<double> hour_temps_;
-    // std::vector<double> day_temps_;
+    std::unique_ptr<TCPServer> tcp_server_;
 
     std::thread read_thread_;
     std::thread hour_thread_;

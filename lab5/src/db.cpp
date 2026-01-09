@@ -101,19 +101,21 @@ std::vector<TempeRecord> DBManager::get_temper_for_period(
     return records;
 }
 
-std::vector<TempeRecord> DBManager::get_all_temper(const std::string& table_name) {
+std::vector<TempeRecord> DBManager::get_last_temper(const std::string& table_name, int n_last_records) {
     if (!db_) 
         return {};
 
     std::lock_guard<std::mutex> lock(db_mutex_);
 
-    std::string sql = "SELECT timestamp, temperature FROM " + table_name + " ORDER BY timestamp;";
+    std::string sql = "SELECT timestamp, temperature FROM " + table_name + " ORDER BY timestamp DESC LIMIT ?;";
     sqlite3_stmt* stmt;
     int rc = sqlite3_prepare_v2(db_.get(), sql.c_str(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Query prepare error: " << sqlite3_errmsg(db_.get()) << std::endl;
         return {};
     }
+
+    sqlite3_bind_int(stmt, 1, n_last_records);
 
     std::vector<TempeRecord> records;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {

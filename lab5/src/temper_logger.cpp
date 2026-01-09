@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <regex>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -33,6 +34,10 @@ TemperLogger::TemperLogger(const std::string& port_name)
     if (!dbm_->initialize(table_names, 3)) {
         std::cerr << "Failed to initialize database" << std::endl;
     }
+
+    tcp_server_ = std::make_unique<TCPServer>(8080, [this](const std::string& request) {
+        return this->handle_tcp_request(request);
+    });
 }
 
 TemperLogger::~TemperLogger() {
@@ -41,7 +46,7 @@ TemperLogger::~TemperLogger() {
 
 bool TemperLogger::start() {
     if (!port_.IsOpen()) {
-        std::cerr << "Failed to open port: " << port_name_ << std::endl;
+        std::cerr << "Failed to open COM port: " << port_name_ << std::endl;
         return false;
     }
 
@@ -49,6 +54,7 @@ bool TemperLogger::start() {
     read_thread_ = std::thread(&TemperLogger::read_loop, this);
     hour_thread_ = std::thread(&TemperLogger::avg_per_hour, this);
     day_thread_ = std::thread(&TemperLogger::avg_per_day, this);
+    tcp_server_->start();
     return true;
 }
 
@@ -60,6 +66,8 @@ void TemperLogger::stop() {
         hour_thread_.join();
     if (day_thread_.joinable()) 
         day_thread_.join();
+
+    tcp_server_->stop();
 }
 
 void TemperLogger::read_loop() {
@@ -84,13 +92,13 @@ void TemperLogger::process_temper(double temper) {
 
 void TemperLogger::avg_per_hour() {
     while (running_) {
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        std::this_thread::sleep_for(std::chrono::hours(1));
 
         mutex_.lock();
 
         std::string now = get_curr_time();
         auto records = dbm_->get_temper_for_period(
-            FULL_LOG, get_time_offset(-30), now //-3600), now
+            FULL_LOG, get_time_offset(-3600), now
         );
         if (!records.empty()) {
             double sum = 0.0;
@@ -107,13 +115,13 @@ void TemperLogger::avg_per_hour() {
 
 void TemperLogger::avg_per_day() {
     while (running_) {
-        std::this_thread::sleep_for(std::chrono::minutes(1));
+        std::this_thread::sleep_for(std::chrono::hours(24));
 
         mutex_.lock();
         
         std::string now = get_curr_time();
         auto records = dbm_->get_temper_for_period(
-            FULL_LOG, get_time_offset(-60), now //-86400), now
+            FULL_LOG, get_time_offset(-86400), now
         );
         if (!records.empty()) {
             double sum = 0.0;
@@ -125,11 +133,67 @@ void TemperLogger::avg_per_day() {
         }
 
         // Очистка логов
-        dbm_->clear_logs(FULL_LOG, get_time_offset(-60)); //-86400));
-        dbm_->clear_logs(HOUR_LOG, get_time_offset(-120)); //-30*86400));
-        dbm_->clear_logs(DAY_LOG, get_time_offset(-240)); //-365*86400));
+        dbm_->clear_logs(FULL_LOG, get_time_offset(-86400));
+        dbm_->clear_logs(HOUR_LOG, get_time_offset(-30*86400));
+        dbm_->clear_logs(DAY_LOG, get_time_offset(-365*86400));
         
         mutex_.unlock();
+    }
+}
+
+std::string TemperLogger::handle_tcp_request(const std::string& request) {
+    size_t end_first_line = request.find("\r\n");
+    if (end_first_line == std::string::npos) {
+        return "{\"error\": \"Bad request\"}";
+    }
+
+    std::string first_line = request.substr(0, end_first_line);
+    size_t start = first_line.find(' ');
+    size_t end = first_line.find(' ', start + 1);
+    if (start == std::string::npos || end == std::string::npos) {
+        return "{\"error\": \"Bad request\"}";
+    }
+
+    std::string url = first_line.substr(start + 1, end - start - 1);
+
+    if (url == "/current") {
+        auto all_records = dbm_->get_last_temper(FULL_LOG);
+        if (!all_records.empty()) {
+            std::string last_data = all_records.back().timestamp;
+            double last_temp = all_records.back().temperature;
+            std::ostringstream oss;
+            oss << "{\"timestamp\":\" " << last_data << ", \"temperature\": " << last_temp << "}";
+            return oss.str();
+        } 
+        else
+            return "{\"error\": \"No temperature data available\"}";
+    }
+    else if (url.substr(0, 8) == "/history") {
+        std::string query_str = url.substr(url.find('?') + 1);
+        std::string start_time = "1970-01-01 00:00:00";
+        std::string end_time = get_curr_time();
+
+        if (!query_str.empty()) {
+            std::regex pattern(R"(start=([^&]+)&end=([^&]+))");
+            std::smatch matches;
+            if (std::regex_search(query_str, matches, pattern)) {
+                start_time = matches[1].str();
+                end_time = matches[2].str();
+            }
+        }
+
+        auto records = dbm_->get_temper_for_period(FULL_LOG, start_time, end_time);
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < records.size(); ++i) {
+            if (i > 0) oss << ",";
+            oss << "{\"timestamp\":\"" << records[i].timestamp << "\", \"temperature\":" << records[i].temperature << "}";
+        }
+        oss << "]";
+        return oss.str();
+    }
+    else {
+        return "{\"error\": \"Invalid endpoint. Use /current or /history?start=...&end=...\"}";
     }
 }
 
@@ -147,7 +211,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Logger started on port: " << argv[1] << std::endl;
-    std::cout << "Press Enter to stop...";
+    std::cout << "Press Enter to stop..." << std::endl;
     std::cin.get();
 
     return 0;
