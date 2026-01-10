@@ -57,6 +57,24 @@ std::string get_time_offset(long offset_sec) {
     return strstr.str();
 }
 
+std::string url_decode(const std::string& input) {
+    std::string output;
+    for (size_t i = 0; i < input.length(); ++i) {
+        if (input[i] == '%' && i + 2 < input.length()) {
+            char hex_str[3] = {input[i+1], input[i+2], '\0'};
+            char decoded_char = static_cast<char>(std::stoi(hex_str, nullptr, 16));
+            output += decoded_char;
+            i += 2;
+        } else if (input[i] == '+') {
+            output += ' ';
+        } else {
+            output += input[i];
+        }
+    }
+    return output;
+}
+
+
 class TemperLogger
 {
 public:

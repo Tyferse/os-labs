@@ -162,7 +162,7 @@ std::string TemperLogger::handle_tcp_request(const std::string& request) {
             std::string last_data = all_records.back().timestamp;
             double last_temp = all_records.back().temperature;
             std::ostringstream oss;
-            oss << "{\"timestamp\":\" " << last_data << ", \"temperature\": " << last_temp << "}";
+            oss << "{\"timestamp\": \"" << last_data << "\", \"temperature\": " << last_temp << "}";
             return oss.str();
         } 
         else
@@ -177,8 +177,8 @@ std::string TemperLogger::handle_tcp_request(const std::string& request) {
             std::regex pattern(R"(start=([^&]+)&end=([^&]+))");
             std::smatch matches;
             if (std::regex_search(query_str, matches, pattern)) {
-                start_time = matches[1].str();
-                end_time = matches[2].str();
+                start_time = url_decode(matches[1].str());
+                end_time = url_decode(matches[2].str());
             }
         }
 
@@ -187,14 +187,13 @@ std::string TemperLogger::handle_tcp_request(const std::string& request) {
         oss << "[";
         for (size_t i = 0; i < records.size(); ++i) {
             if (i > 0) oss << ",";
-            oss << "{\"timestamp\":\"" << records[i].timestamp << "\", \"temperature\":" << records[i].temperature << "}";
+            oss << "{\"timestamp\": \"" << records[i].timestamp << "\", \"temperature\": " << records[i].temperature << "}";
         }
         oss << "]";
         return oss.str();
     }
-    else {
+    else
         return "{\"error\": \"Invalid endpoint. Use /current or /history?start=...&end=...\"}";
-    }
 }
 
 

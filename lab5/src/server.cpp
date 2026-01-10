@@ -10,6 +10,7 @@ static bool winsock_initialized = false;
 #endif
 
 
+
 TCPServer::TCPServer(int port, RequestHandler handler)
     : port_(port), handler_(std::move(handler)) {
 #ifdef _WIN32

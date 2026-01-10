@@ -8,7 +8,7 @@
 
 // Статистические данные о температуре во Владивостоке по месяцам
 // Максимум, Минимум, Среднее, Стандартное отклонение
-double history_temper[12][4] = {
+double temper_history[12][4] = {
     {3.9, -27.6, -12.41, 6.92},
     {8.5, -16.2, -6.01, 4.21},
     {16.9, -6.6, 1.61, 3.18},
@@ -33,11 +33,11 @@ double gen_temper(std::mt19937& rng) {
         ).month()
     ) - 1;
 
-    std::normal_distribution<> dist(history_temper[month][2], history_temper[month][3]);
+    std::normal_distribution<> dist(temper_history[month][2], temper_history[month][3]);
     double result = dist(rng);
 
-    result = result < history_temper[month][1] ? history_temper[month][1] : result;
-    result = result > history_temper[month][0] ? history_temper[month][0] : result;
+    result = result < temper_history[month][1] ? temper_history[month][1] : result;
+    result = result > temper_history[month][0] ? temper_history[month][0] : result;
     return result;
 }
 
