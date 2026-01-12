@@ -49,7 +49,7 @@ TemperLogger::~TemperLogger() {
 
 bool TemperLogger::start() {
     if (!port_.IsOpen()) {
-        std::cerr << "Failed to open port: " << port_name_ << "\n";
+        std::cerr << "Failed to open port: " << port_name_ << std::endl;
         return false;
     }
 
@@ -184,7 +184,7 @@ void TemperLogger::avg_per_day() {
         for (double t : day_temps_) 
             sum += t;
 
-        day_log_ << get_curr_time() << " | " << sum / day_temps_.size() << "\n";
+        day_log_ << get_curr_time() << " | " << sum / day_temps_.size() << std::endl;
         day_log_.flush();
 
         day_log_.clear();
@@ -195,18 +195,18 @@ void TemperLogger::avg_per_day() {
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: temper_logger [port]\n";
+        std::cerr << "Usage: temper_logger [port]" << std::endl;
         return 1;
     }
 
     TemperLogger logger(argv[1]);
     if (!logger.start()) {
-        std::cerr << "Failed to start logger\n";
+        std::cerr << "Failed to start logger" << std::endl;
         return 1;
     }
 
-    std::cout << "Logger started on port: " << argv[1] << "\n";
-    std::cout << "Press Enter to stop...\n";
+    std::cout << "Logger started on port: " << argv[1] << std::endl;
+    std::cout << "Press Enter to stop...";
     std::cin.get();
 
     return 0;

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мониторинг температуры</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            background-color: #2d2418fd;
+            color: white;
+        }
+        .left-panel {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .right-panel {
+            width: 70%;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-top: 0;
+        }
+        #current-temper-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #ff6000;
+            padding-bottom: 0.5em;
+        }
+        #current-temper-date {
+            font-style: italic;
+            color: lightgray;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        th {
+            background-color: #2e2e2e;
+            color: white;
+        }
+        #hour-headers {
+            background-color: #2e2e2e;
+            color: white;
+        }
+        .temper-cell {
+            color: #ff6000;
+            font-size: 1.2em;
+        }
+        #chart-container {
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <div style="padding-bottom: 1em;">
+            <h2>Текущая температура</h2>
+            <div id="current-temper-value">Загрузка...</div>
+            <div id="current-temper-date"></div>
+        </div>
+        <div>
+            <h2>Средняя за час</h2>
+            <table id="hour-table">
+                <thead id="hour-headers">
+                    <tr>
+                        <th>Час</th>
+                        <th>Средняя темп.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="right-panel">
+        <h2 style="text-align: center;">График температуры (последние 3 минуты)</h2>
+        <div id="chart-container">
+            <canvas id="temperChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('temperChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Температура (°C)',
+                    data: [],
+                    fill: true,
+                    borderColor: 'rgba(255, 96, 0, 0.7)',
+                    backgroundColor: 'rgba(255, 96, 0, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateData() {
+            fetch('/api/data')
+                .then(response => response.json())
+                .then(data => {
+                    // Обновляем текущую температуру
+                    const currentTempValueEl = document.getElementById('current-temper-value');
+                    const currentTempDateEl = document.getElementById('current-temper-date');
+                    if (data.current_temperature !== null) {
+                        currentTempValueEl.textContent = data.current_temperature[1].toFixed(2) + ' °C';
+                        currentTempDateEl.textContent = 'Данные на ' + data.current_temperature[0];
+                    } 
+                    else {
+                        currentTempValueEl.textContent = 'Нет данных';
+                    }
+
+                    // Обновляем таблицу средней за час
+                    const tbody = document.querySelector('#hour-table tbody');
+                    tbody.innerHTML = '';
+                    // Сортируем часы по убыванию (новые сверху)
+                    const sortedHours = Object.keys(data.hour_average_today).sort((a, b) => new Date(b) - new Date(a)).slice(0, 12);
+                    sortedHours.forEach(hour => {
+                        const row = document.createElement('tr');
+                        const hourCell = document.createElement('td');
+                        hourCell.textContent = hour;
+                        const tempCell = document.createElement('td');
+                        tempCell.className = "temper-cell";
+                        tempCell.textContent = data.hour_average_today[hour];
+                        row.appendChild(hourCell);
+                        row.appendChild(tempCell);
+                        tbody.appendChild(row);
+                    });
+
+                    // Обновляем график
+                    const timestamps = data.temperature_history.map(item => item[0]);
+                    const temps = data.temperature_history.map(item => item[1]);
+
+                    chart.data.labels = timestamps;
+                    chart.data.datasets[0].data = temps;
+                    chart.update();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        setInterval(updateData, 3000);
+        updateData();
+    </script>
+</body>
+</html>
