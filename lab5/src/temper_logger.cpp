@@ -19,6 +19,7 @@
 #define HOUR_LOG std::string("hour_temperature")
 #define DAY_LOG std::string("day_temperature")
 
+// socat -d -d pty,raw,echo=0 pty,raw,echo=0
 
 TemperLogger::TemperLogger(const std::string& port_name)
     : port_name_(port_name) {

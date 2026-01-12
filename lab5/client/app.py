@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 
-app = Flask("temperature_client", template_folder='.\client')
+app = Flask("temperature_client", template_folder='client')
 
 SERVER_URL = "http://localhost:8080"
 
