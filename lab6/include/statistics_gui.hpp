@@ -47,6 +47,8 @@ public:
 private:
     void setup_ui();
     void setup_chart();
+    void find_initial_history();
+    void update_hour_table();
     void update_data();
 
     QWidget *central_widget;
@@ -76,5 +78,7 @@ private:
     QString curr_timestamp;
     double curr_temper = 0.0;
     QList<QPair<QString, double>> temper_history;
-    QMap<QString, double> hour_avg_today;
+    QList<QPair<QDateTime, double>> hour_avg_today; 
+    QList<double> curr_hour_temper;             
+    QDateTime curr_hour_key;
 };

@@ -32,4 +32,5 @@ cd build
 cmake -G "MinGW Makefiles" ..
 mingw32-make
 
-"C:\Qt\Qt-6.10.1\bin\windeployqt6.exe" qcplot.exe
+"%QT_INSTALL%\bin\windeployqt6.exe"
+.\qcplot.exe

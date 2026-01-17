@@ -31,6 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
       curr_temp_label(new QLabel("Загрузка...", this)),
       curr_date_label(new QLabel("", this)),
       hour_table(new QTableWidget(0, 2, this)),
+      curr_hour_key(QDateTime::fromString(
+        QDateTime::currentDateTime().toString("yyyy-MM-dd hh:00:00"), 
+        "yyyy-MM-dd hh:00:00")
+      ),
       right_panel(new QWidget()),
       right_layout(new QVBoxLayout(right_panel)),
       lower_series(new QLineSeries()),
@@ -45,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     setup_chart();
     setup_ui();
+    find_initial_history();
     setCentralWidget(central_widget);
 
     connect(timer, &QTimer::timeout, this, &MainWindow::update_data);
@@ -92,6 +97,91 @@ void MainWindow::setup_chart() {
 
     chart_view = new QChartView(chart);
     chart_view->setRenderHint(QPainter::Antialiasing);
+}
+
+void MainWindow::find_initial_history() {
+    QNetworkRequest history_req;
+    QDateTime now = QDateTime::currentDateTime();
+    QDateTime start = now.addSecs(-12 * 3600); // данные за 12 часов
+    QString start_str = start.toString("yyyy-MM-dd hh:00:00");
+    QString end_str = now.toString("yyyy-MM-dd hh:mm:ss");
+    QString url = QString("http://localhost:8080/history?start=%1&end=%2").arg(start_str).arg(end_str);
+    history_req.setUrl(QUrl(url));
+    history_req.setRawHeader("User-Agent", "QtTemperatureClient");
+
+    QNetworkReply *history_reply = network_manager->get(history_req);
+    connect(history_reply, &QNetworkReply::finished, [this, history_reply, start]() {
+        if (history_reply->error() == QNetworkReply::NoError) {
+            QByteArray data = history_reply->readAll();
+            QJsonDocument doc = QJsonDocument::fromJson(data);
+            QJsonArray arr = doc.array();
+
+            QList<QPair<QString, double>> new_history;
+            for (const auto &value : arr) {
+                QJsonObject obj = value.toObject();
+                QString ts = obj["timestamp"].toString();
+                double temp = obj["temperature"].toDouble();
+                new_history.append(qMakePair(ts, temp));
+            }
+
+            // Обновление истории
+            QMetaObject::invokeMethod(this, [this, new_history, start]() {
+                temper_history = new_history;
+                QDateTime history_hour = start;
+                double avg;
+
+                // Добавляем точки из истории за последние 12 часов, если они есть
+                for (const auto &point : new_history) {
+                    QDateTime dt = QDateTime::fromString(point.first, "yyyy-MM-dd hh:mm:ss");
+
+                    if (history_hour <= dt && dt < history_hour.addSecs(3600)) {
+                        curr_hour_temper.append(point.second);
+                    }
+                    else {
+                        avg = 0.0;
+                        for (int i = 0; i < curr_hour_temper.size(); i++)
+                            avg += curr_hour_temper[i];
+
+                        avg /= curr_hour_temper.size();
+                        hour_avg_today.append(qMakePair(history_hour, avg));
+
+                        while (history_hour > dt || dt >= history_hour.addSecs(3600))
+                            history_hour = history_hour.addSecs(3600);
+                    
+                        curr_hour_temper.clear();
+                    }
+                }
+
+                update_hour_table();
+            });
+        }
+        history_reply->deleteLater();
+    });
+}
+
+void MainWindow::update_hour_table() {
+    // Считаем среднее за текущий час
+    double curr_avg = 0.0;
+    if (!curr_hour_temper.isEmpty()) {
+        for (int i = 0; i < curr_hour_temper.size(); i++)
+            curr_avg += curr_hour_temper[i];
+
+        curr_avg /= curr_hour_temper.size();
+    }
+
+    int total_rows = qMin(12, 1 + static_cast<int>(hour_avg_today.size()));
+    hour_table->setRowCount(total_rows);
+
+    // Первая строка — текущий час
+    hour_table->setItem(0, 0, new QTableWidgetItem(curr_hour_key.toString("dd.MM.yyyy hh:mm")));
+    hour_table->setItem(0, 1, new QTableWidgetItem(QString::number(curr_avg, 'f', 2)));
+
+    // Остальные строки — прошлые часы
+    for (int i = 0; i < total_rows - 1; ++i) {
+        const auto &entry = hour_avg_today[hour_avg_today.size() - 1 - i];
+        hour_table->setItem(i + 1, 0, new QTableWidgetItem(entry.first.toString("dd.MM.yyyy hh:mm")));
+        hour_table->setItem(i + 1, 1, new QTableWidgetItem(QString::number(entry.second, 'f', 2)));
+    }
 }
 
 void MainWindow::update_data() {
@@ -150,20 +240,40 @@ void MainWindow::update_data() {
             QMetaObject::invokeMethod(this, [this, new_history]() {
                 temper_history = new_history;
 
-                // Обновление таблицы
-                hour_table->setRowCount(1);
-                double temp = 0;
-                QString time_str;
-                for (int i = 0; i < new_history.size(); ++i) {
-                    // time_str = new_history[i].first;
-                    temp += new_history[i].second;
+                // Получаем текущее время и начало текущего часа
+                QDateTime new_hour_key = QDateTime::fromString(
+                    QDateTime::currentDateTime().toString("yyyy-MM-dd hh:00:00"), 
+                    "yyyy-MM-dd hh:00:00"
+                );
 
-                    // hour_table->setItem(i, 0, new QTableWidgetItem(time_str));
-                    // hour_table->setItem(i, 1, new QTableWidgetItem(QString::number(temp, 'f', 2)));
+                // Проверяем, сменился ли час
+                if (new_hour_key != curr_hour_key) {
+                    if (!curr_hour_temper.isEmpty()) {
+                        double avg = 0.0; 
+                        for (int i = 0; i < curr_hour_temper.size(); i++)
+                            avg += curr_hour_temper[i];
+
+                        avg /= curr_hour_temper.size();
+                        hour_avg_today.append(qMakePair(curr_hour_key, avg));
+
+                        if (hour_avg_today.size() > 11)
+                            hour_avg_today.removeFirst();
+                    }
+
+                    curr_hour_key = new_hour_key;
+                    curr_hour_temper.clear();
                 }
 
-                hour_table->setItem(0, 0, new QTableWidgetItem(new_history[new_history.size()-1].first));
-                hour_table->setItem(0, 1, new QTableWidgetItem(QString::number(temp / new_history.size(), 'f', 2)));
+                // Добавляем новые точки из истории в текущий час
+                for (const auto &point : new_history) {
+                    QDateTime dt = QDateTime::fromString(point.first, "yyyy-MM-dd hh:mm:ss");
+                    if (curr_hour_key <= dt && dt < curr_hour_key.addSecs(3600)) {
+                        curr_hour_temper.append(point.second);
+                    }
+                }
+
+                // Обновляем таблицу
+                update_hour_table();
 
                 // Обновление графика
                 QList<QPointF> points;
