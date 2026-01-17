@@ -16,6 +16,7 @@
 #include <QDateTime>
 #include <QScatterSeries>
 #include <QtCharts/QDateTimeAxis>
+#include <QtCharts/QAreaSeries>
 #include <QThread>
 #include <iostream>
 
@@ -32,27 +33,15 @@ MainWindow::MainWindow(QWidget *parent)
       hour_table(new QTableWidget(0, 2, this)),
       right_panel(new QWidget()),
       right_layout(new QVBoxLayout(right_panel)),
-      series(new QLineSeries()),
-      axisX(new QValueAxis()),
+      lower_series(new QLineSeries()),
+      upper_series(new QLineSeries()),
+      area_series(new QAreaSeries(upper_series, lower_series)),
+      axisX(new QDateTimeAxis()),
       axisY(new QValueAxis()),
       timer(new QTimer(this)),
       network_manager(new QNetworkAccessManager(this))
 {
-    // central_widget = new QWidget(this);
-    // main_layout = new QVBoxLayout(central_widget);
-    // top_layout = new QHBoxLayout();
-    // left_panel = new QWidget();
-    // left_layout = new QVBoxLayout(left_panel);
-    // curr_temp_label = new QLabel("Загрузка...", this);
-    // curr_date_label = new QLabel("", this);
-    // hour_table = new QTableWidget(0, 2, this);
-    // right_panel = new QWidget();
-    // right_layout = new QVBoxLayout(right_panel);
-    // series = new QLineSeries();
-    // axisX = new QValueAxis();
-    // axisY = new QValueAxis();
-    // timer = new QTimer(this);
-    // network_manager = new QNetworkAccessManager(this);
+    area_series->setColor(QColor(255, 165, 0, 100));
 
     setup_chart();
     setup_ui();
@@ -91,15 +80,15 @@ void MainWindow::setup_ui() {
 
 void MainWindow::setup_chart() {
     chart = new QChart();
-    chart->addSeries(series);
+    chart->addSeries(area_series);
     chart->legend()->hide();
 
     axisX->setTitleText("Время");
     axisY->setTitleText("Температура (°C)");
     chart->addAxis(axisX, Qt::AlignBottom);
     chart->addAxis(axisY, Qt::AlignLeft);
-    series->attachAxis(axisX);
-    series->attachAxis(axisY);
+    area_series->attachAxis(axisX);
+    area_series->attachAxis(axisY);
 
     chart_view = new QChartView(chart);
     chart_view->setRenderHint(QPainter::Antialiasing);
@@ -160,30 +149,59 @@ void MainWindow::update_data() {
             // Обновление истории
             QMetaObject::invokeMethod(this, [this, new_history]() {
                 temper_history = new_history;
+
+                // Обновление таблицы
+                hour_table->setRowCount(1);
+                double temp = 0;
+                QString time_str;
+                for (int i = 0; i < new_history.size(); ++i) {
+                    // time_str = new_history[i].first;
+                    temp += new_history[i].second;
+
+                    // hour_table->setItem(i, 0, new QTableWidgetItem(time_str));
+                    // hour_table->setItem(i, 1, new QTableWidgetItem(QString::number(temp, 'f', 2)));
+                }
+
+                hour_table->setItem(0, 0, new QTableWidgetItem(new_history[new_history.size()-1].first));
+                hour_table->setItem(0, 1, new QTableWidgetItem(QString::number(temp / new_history.size(), 'f', 2)));
+
                 // Обновление графика
                 QList<QPointF> points;
-                for (int i = 0; i < temper_history.size(); ++i)
-                    points.append(QPointF(i, temper_history[i].second));
-                
-                series->replace(points);
+                double minY = 60., maxY = -70.;
+                for (int i = 0; i < temper_history.size(); ++i) {
+                    QDateTime dt = QDateTime::fromString(temper_history[i].first, "yyyy-MM-dd hh:mm:ss");
+                    if (!dt.isValid()) 
+                        continue;
 
-                // Обновление соси X с временными метками
-                if (!points.isEmpty()) 
-                    axisX->setRange(0, points.size() - 1);
+                    points.append(QPointF(dt.toMSecsSinceEpoch(), temper_history[i].second));
+                    minY = qMin(minY, temper_history[i].second);
+                    maxY = qMax(maxY, temper_history[i].second);
+                }
+                
+                upper_series->replace(points);
+                
+                // Обновление оси X с временными метками
+                if (!points.isEmpty()) {
+                    axisX->setRange(
+                        QDateTime::fromMSecsSinceEpoch(qint64(points.first().x())),
+                        QDateTime::fromMSecsSinceEpoch(qint64(points.last().x()))
+                    );
+                }
+
+                // Обновление оси Y
+                double margin = (maxY - minY) * 0.1;
+                if (margin == 0) 
+                    margin = 0.5;
+
+                axisY->setRange(minY - margin, maxY + margin);
+
+                QList<QPointF> lower_points;
+                for (const auto &p : points)
+                    lower_points.append(QPointF(p.x(), 0)); 
+                
+                lower_series->replace(lower_points);
             });
         }
         history_reply->deleteLater();
     });
 }
-
-
-// int main(int argc, char *argv[]) {
-//     QApplication app(argc, argv);
-
-//     MainWindow window;
-//     window.setWindowTitle("Мониторинг температуры");
-//     window.resize(1200, 800);
-//     window.show();
-
-//     return app.exec();
-// }

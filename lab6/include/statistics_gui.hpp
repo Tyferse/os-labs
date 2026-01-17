@@ -16,6 +16,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QtCharts/QAreaSeries>
+#include <QtCharts/QDateTimeAxis>
 
 
 QT_BEGIN_NAMESPACE
@@ -61,8 +63,10 @@ private:
     QVBoxLayout *right_layout;
     QChart *chart;
     QChartView *chart_view;
-    QLineSeries *series;
-    QValueAxis *axisX;
+    QLineSeries *upper_series;
+    QLineSeries *lower_series;
+    QAreaSeries *area_series;
+    QDateTimeAxis* axisX;
     QValueAxis *axisY;
 
     QTimer *timer;
