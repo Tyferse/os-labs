@@ -45,7 +45,12 @@ MainWindow::MainWindow(QWidget *parent)
       timer(new QTimer(this)),
       network_manager(new QNetworkAccessManager(this))
 {
-    area_series->setColor(QColor(255, 165, 0, 100));
+    setStyleSheet(R"(
+        font-family: Arial, sans-serif;
+        background-color: rgba(45, 36, 24, 0.99);
+        color: white;
+        padding: 20px;
+    )");
 
     setup_chart();
     setup_ui();
@@ -60,12 +65,37 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {}
 
 void MainWindow::setup_ui() {
-    curr_temp_label->setStyleSheet("font-size: 30px; color: orange;");
-    curr_date_label->setStyleSheet("font-style: italic; color: gray;");
+    curr_temp_label->setStyleSheet("font-size: 4em; color: #ff6000; font-weight: bold; padding-bottom: 1em;");
+    curr_date_label->setStyleSheet("font-style: italic; color: lightgray;");
     curr_date_label->setTextFormat(Qt::PlainText);
 
+    // hour_table->setHorizontalHeaderLabels({"Час", "Средняя темп."});
+    // hour_table->horizontalHeader()->setStretchLastSection(true);
+    QHeaderView *header = hour_table->horizontalHeader();
+    header->setStyleSheet(R"(
+        QHeaderView::section {
+            background-color: #d4a65c;
+            color: #44ade1;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+    )");
     hour_table->setHorizontalHeaderLabels({"Час", "Средняя темп."});
-    hour_table->horizontalHeader()->setStretchLastSection(true);
+    // hour_table->horizontalHeader()->setStretchLastSection(true);
+
+    hour_table->setStyleSheet("background-color: #887878;");
+    hour_table->viewport()->setStyleSheet("background-color: #665959;");
+    // hour_table->setStyleSheet(R"(
+    //     QTableWidget {
+    //         gridline-color: #d0d0d0;
+    //         font-size: 12pt;
+    //         color: #d0d0d0;
+    //     }
+    //     QTableWidget::item:selected {
+    //         background-color: #c7a16c;
+    //     }
+    // )");
+    // hour_table->viewport()->setStyleSheet("background-color: #9b7b50;");
 
     left_layout->addWidget(new QLabel("Текущая температура"));
     left_layout->addWidget(curr_temp_label);
@@ -88,15 +118,52 @@ void MainWindow::setup_chart() {
     chart->addSeries(area_series);
     chart->legend()->hide();
 
+    // Фон графика
+    chart->setBackgroundBrush(QColor("#986a43"));
+    // chart->setPlotAreaBackgroundBrush(QColor("#2e2e2e"));
+    // chart->setPlotAreaBackgroundVisible(true);
+
+    // Оси
     axisX->setTitleText("Время");
     axisY->setTitleText("Температура (°C)");
+
+    // Цвет текста подписей осей
+    QFont axisFont;
+    axisFont.setPointSize(10);
+    axisX->setLabelsFont(axisFont);
+    axisY->setLabelsFont(axisFont);
+    axisX->setLabelsColor(QColor("white"));
+    axisY->setLabelsColor(QColor("white"));
+
+    // Цвет заголовков осей
+    axisX->setTitleBrush(QBrush(QColor("white")));
+    axisY->setTitleBrush(QBrush(QColor("white")));
+    axisX->setTitleFont(QFont("Arial", 12, QFont::Bold));
+    axisY->setTitleFont(QFont("Arial", 12, QFont::Bold));
+
+    // Сетка
+    axisX->setGridLineVisible(true);
+    axisY->setGridLineVisible(true);
+    axisX->setGridLineColor(QColor("rgba(255, 255, 255, 0.7)"));
+    axisY->setGridLineColor(QColor("rgba(255, 255, 255, 0.7)"));
+
+    // Линии осей (основные)
+    axisX->setLinePenColor(QColor("#cccccc"));
+    axisY->setLinePenColor(QColor("#cccccc"));
+
     chart->addAxis(axisX, Qt::AlignBottom);
     chart->addAxis(axisY, Qt::AlignLeft);
     area_series->attachAxis(axisX);
     area_series->attachAxis(axisY);
 
+    // Цвет самой линии и заливки
+    upper_series->setColor(QColor("rgba(255, 98, 0, 0.9)")); 
+    area_series->setBorderColor(QColor("rgba(255, 96, 0, 0.9)"));
+    area_series->setColor(QColor("rgb(255, 98, 0)"));
+
     chart_view = new QChartView(chart);
     chart_view->setRenderHint(QPainter::Antialiasing);
+    // chart_view->setStyleSheet("background-color: #2e2e2e;");
 }
 
 void MainWindow::find_initial_history() {
@@ -174,7 +241,12 @@ void MainWindow::update_hour_table() {
 
     // Первая строка — текущий час
     hour_table->setItem(0, 0, new QTableWidgetItem(curr_hour_key.toString("dd.MM.yyyy hh:mm")));
-    hour_table->setItem(0, 1, new QTableWidgetItem(QString::number(curr_avg, 'f', 2)));
+    // Добавляем стиль к ячейкам с температурой
+    auto *item = new QTableWidgetItem(QString::number(curr_avg, 'f', 2));
+    item->setForeground(QColor("#ff6000"));
+    item->setTextAlignment(Qt::AlignCenter);
+    item->setFont(QFont("Arial", 13));
+    hour_table->setItem(0, 1, item);
 
     // Остальные строки — прошлые часы
     for (int i = 0; i < total_rows - 1; ++i) {
