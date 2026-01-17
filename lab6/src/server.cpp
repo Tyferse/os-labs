@@ -6,9 +6,8 @@
 #include <algorithm>
 
 #ifdef _WIN32
-static bool winsock_initialized = false;
+    static bool winsock_initialized = false;
 #endif
-
 
 
 TCPServer::TCPServer(int port, RequestHandler handler)
