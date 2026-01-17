@@ -12,7 +12,7 @@ include_directories(qcustomplot)
 
 # Добавляем файлы QCustomPlot
 set(SOURCES
-    main.cpp
+    src/main.cpp
     qcustomplot/qcustomplot.cpp
 )
 
@@ -24,4 +24,4 @@ add_executable(qcustomplot-example ${SOURCES} ${HEADERS})
 
 target_link_libraries(qcustomplot-example Qt6::Core Qt6::Widgets Qt6::PrintSupport)
 
-target_include_directories(qcustomplot-example PRIVATE .)
+# target_include_directories(qcustomplot-example PRIVATE qcustomplot)

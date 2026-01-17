@@ -10,8 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_PREFIX_PATH "C:/Qt/Qt-6.10.1")
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Widgets)
 
-add_executable(QtTest main.cpp)
+qt_standard_project_setup()
 
-target_link_libraries(QtTest PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+add_executable(QtTest src/main.cpp)
+
+target_link_libraries(QtTest PRIVATE Qt6::Core Qt6::Charts Qt6::Gui Qt6::Widgets)
